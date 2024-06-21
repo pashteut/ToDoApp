@@ -1,4 +1,4 @@
-package com.pashteut.todoapp
+package com.pashteut.todoapp.di
 
 import android.content.Context
 import com.pashteut.todoapp.model.ToDoItemDao

@@ -18,35 +18,37 @@ class DetailScreenViewModel @Inject constructor(
     val text = MutableStateFlow("")
     val priority = MutableStateFlow(Priority.DEFAULT)
     var deadLineTime = MutableStateFlow<Long?>(null)
-    var pickedItem :ToDoItem? = null
+    private var pickedItem: ToDoItem? = null
 
-    fun saveToDoItem() {
-        pickedItem?.let {
-            repository.updateItem(
-                it.copy(
+    fun saveToDoItem(): Boolean {
+        if (text.value.trim().isNotEmpty()) {
+            pickedItem?.let {
+                repository.updateItem(
+                    it.copy(
+                        text = text.value.trim(),
+                        priority = priority.value,
+                        deadline = deadLineTime.value,
+                        updatedDate = System.currentTimeMillis()
+                    )
+                )
+            } ?: repository.saveItem(
+                ToDoItem(
                     text = text.value.trim(),
                     priority = priority.value,
                     deadline = deadLineTime.value,
-                    updatedDate = System.currentTimeMillis()
+                    isDone = false,
+                    createdDate = System.currentTimeMillis()
                 )
             )
-        } ?:
-        repository.saveItem(
-            ToDoItem(
-                text = text.value.trim(),
-                priority = priority.value,
-                deadline = deadLineTime.value,
-                isDone = false,
-                createdDate = System.currentTimeMillis()
-            )
-        )
+        } else
+            return false
+        return true
     }
 
-    fun deleteItem() : Boolean {
+    fun deleteItem() {
         pickedItem?.let {
             repository.deleteItem(it.id)
-        } ?: return false
-        return true
+        }
     }
 
     fun setPickedItem(id: Long) {

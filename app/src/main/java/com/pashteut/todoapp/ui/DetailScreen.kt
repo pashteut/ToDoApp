@@ -1,5 +1,6 @@
 package com.pashteut.todoapp.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,21 +48,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.pashteut.todoapp.R
-import com.pashteut.todoapp.ScreenMain
 import com.pashteut.todoapp.model.Priority
 import com.pashteut.todoapp.presentator.DetailScreenViewModel
 import com.pashteut.todoapp.ui.theme.additionalColors
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
 
 @Composable
 fun DetailScreen(
@@ -78,10 +79,7 @@ fun DetailScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            AppBar(navController) {
-                viewModel.saveToDoItem()
-                navController.popBackStack()
-            }
+            AppBar(navController, saveItem = viewModel::saveToDoItem)
         }
     ) { innerPadding ->
         val scrollState = rememberScrollState()
@@ -112,8 +110,8 @@ fun DetailScreen(
             Spacer(modifier = Modifier.height(5.dp))
             TextButton(
                 onClick = {
-                    if (viewModel.deleteItem())
-                        navController.navigate(ScreenMain)
+                    viewModel.deleteItem()
+                    navController.navigate(ScreenMain)
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -143,14 +141,16 @@ fun DetailScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppBar(
+private fun AppBar(
     navController: NavController,
-    saveItem: () -> Unit
+    saveItem: () -> Boolean
 ) {
+    val context = LocalContext.current
+    val text = stringResource(id = R.string.enterTheText)
     TopAppBar(
         title = {},
         navigationIcon = {
-            IconButton(onClick = { navController.popBackStack() }) {
+            IconButton(onClick = { navController.navigate(ScreenMain) }) {
                 Icon(
                     painter = painterResource(id = R.drawable.close_icon),
                     contentDescription = "close"
@@ -159,8 +159,10 @@ fun AppBar(
         },
         actions = {
             TextButton(onClick = {
-                saveItem()
-                navController.navigate(ScreenMain)
+                if(saveItem())
+                    navController.navigate(ScreenMain)
+                else
+                    Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
             }) {
                 Text(
                     stringResource(id = R.string.save),
@@ -172,7 +174,7 @@ fun AppBar(
 }
 
 @Composable
-fun PriorityBox(
+private fun PriorityBox(
     priority: Priority,
     setPriority: (Priority) -> Unit
 ) {
@@ -215,10 +217,16 @@ fun PriorityBox(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer)
+            offset = DpOffset(x = 30.dp, y = (-25).dp),
+            modifier = Modifier.background(MaterialTheme.colorScheme.background)
         ) {
             DropdownMenuItem(
-                text = { Text(stringResource(id = R.string.no), modifier = Modifier.alpha(.5f)) },
+                text = {
+                    Text(
+                        stringResource(id = R.string.no),
+                        modifier = Modifier.alpha(.5f)
+                    )
+                },
                 onClick = {
                     setPriority(Priority.DEFAULT)
                     expanded = false
@@ -254,7 +262,7 @@ fun PriorityBox(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeadlineBox(
+private fun DeadlineBox(
     deadline: Long? = null,
     setDeadline: (Long?) -> Unit
 ) {

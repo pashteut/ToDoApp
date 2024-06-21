@@ -1,4 +1,4 @@
-package com.pashteut.todoapp
+package com.pashteut.todoapp.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -8,8 +8,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.pashteut.todoapp.ui.DetailScreen
-import com.pashteut.todoapp.ui.MainScreen
 import com.pashteut.todoapp.ui.theme.ToDoAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.Serializable

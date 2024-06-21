@@ -1,8 +1,11 @@
 package com.pashteut.todoapp.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +25,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -59,6 +64,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,7 +72,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.pashteut.todoapp.R
-import com.pashteut.todoapp.ScreenDetail
 import com.pashteut.todoapp.model.Priority
 import com.pashteut.todoapp.model.ToDoItem
 import com.pashteut.todoapp.presentator.MainScreenViewModel
@@ -172,7 +177,7 @@ fun MainScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppBar(
+private fun AppBar(
     visibility: Boolean,
     changeVisibility: () -> Unit,
     doneCount: Int,
@@ -229,9 +234,9 @@ fun AppBar(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun ToDoItemElement(
+private fun ToDoItemElement(
     item: ToDoItem,
     modifier: Modifier = Modifier,
     onDelete: (Long) -> Unit,
@@ -255,6 +260,7 @@ fun ToDoItemElement(
         },
         positionalThreshold = { it * .3f }
     )
+    var expanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = item.isDone) {
         swipeEnabled = false
@@ -276,19 +282,59 @@ fun ToDoItemElement(
         }
     }
 
+    Box {
+        SwipeToDismissBox(
+            state = swipeState,
+            modifier = modifier
+                .combinedClickable(
+                    onClick = {},
+                    onLongClick = {expanded = true }
+                ),
+            backgroundContent = {
+                SwipeBackground(
+                    swipeState = swipeState,
+                    itemIsDone = item.isDone
+                )
+            },
+            content = { ToDoItemCard(item = item, onInfoIconClick = { onInfoIconClick(item.id) }) },
+            enableDismissFromStartToEnd = swipeEnabled,
+            enableDismissFromEndToStart = swipeEnabled,
+        )
 
-    SwipeToDismissBox(
-        state = swipeState,
-        modifier = modifier,
-        backgroundContent = { SwipeBackground(swipeState = swipeState, itemIsDone = item.isDone) },
-        content = { ToDoItemCard(item = item, onInfoIconClick = { onInfoIconClick(item.id) }) },
-        enableDismissFromStartToEnd = swipeEnabled,
-        enableDismissFromEndToStart = swipeEnabled,
-    )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            offset = DpOffset(x = 60.dp, y = (-30).dp),
+            modifier = modifier
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        text = if (item.isDone) stringResource(id = R.string.markIsNotDone)
+                        else stringResource(id = R.string.markIsDone),
+                        modifier = Modifier
+                    )
+                },
+                onClick = { changeIsDone(item.id) },
+                modifier = Modifier.clip(RoundedCornerShape(12.dp))
+            )
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        stringResource(id = R.string.delete),
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier
+                    )
+                },
+                onClick = { onDelete(item.id) },
+            )
+        }
+    }
 }
 
 @Composable
-fun ToDoItemCard(
+private fun ToDoItemCard(
     item: ToDoItem,
     modifier: Modifier = Modifier,
     onInfoIconClick: () -> Unit = {},
@@ -382,7 +428,7 @@ fun ToDoItemCard(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SwipeBackground(
+private fun SwipeBackground(
     swipeState: SwipeToDismissBoxState,
     itemIsDone: Boolean = false
 ) {
@@ -420,5 +466,3 @@ fun SwipeBackground(
             )
     }
 }
-
-

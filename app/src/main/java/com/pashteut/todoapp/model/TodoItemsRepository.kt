@@ -1,55 +1,41 @@
 package com.pashteut.todoapp.model
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import com.pashteut.todoapp.common.AppDispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class TodoItemsRepository @Inject constructor(
-    private val database: ToDoItemDao
+    private val database: ToDoItemDao,
+    private val appDispatchers: AppDispatchers,
 ) {
+
 
     fun getAllItems() = database.observeAll()
 
-    suspend fun getItem(id: Long)  =
-        CoroutineScope(Dispatchers.IO)
-            .async { database.getById(id) }
-            .await()
+    suspend fun getItem(id: Long) =
+        withContext(appDispatchers.io) {
+            database.getById(id)
+        }
 
-    fun saveItem(item: ToDoItem) {
-        CoroutineScope(Dispatchers.IO).launch {
+    suspend fun saveItem(item: ToDoItem) =
+        withContext(appDispatchers.io) {
             database.insert(item)
         }
-    }
-    fun updateItem(item: ToDoItem) {
-        CoroutineScope(Dispatchers.IO).launch {
+
+    suspend fun updateItem(item: ToDoItem) =
+        withContext(appDispatchers.io) {
             database.update(item)
         }
-    }
 
-    fun deleteItem(id: Long) {
-        CoroutineScope(Dispatchers.IO).launch {
+
+    suspend fun deleteItem(id: Long) =
+        withContext(appDispatchers.io) {
             database.delete(id)
         }
-    }
-    fun deleteItem(item: ToDoItem) {
-        CoroutineScope(Dispatchers.IO).launch {
-            database.delete(item)
-        }
-    }
 
-    fun markIsDone(position: Int, isDone: Boolean) {
-        CoroutineScope(Dispatchers.IO).launch {
-            database.update(getAllItems().first()[position].copy(isDone = isDone))
-        }
-    }
-
-    fun changeIsDone(id : Long) {
-        CoroutineScope(Dispatchers.IO).launch {
+    suspend fun changeIsDone(id: Long) =
+        withContext(appDispatchers.io) {
             val item = database.getById(id)
             database.update(item.copy(isDone = !item.isDone))
         }
-    }
 }

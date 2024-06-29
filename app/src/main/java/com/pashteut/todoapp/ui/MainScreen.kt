@@ -1,5 +1,7 @@
 package com.pashteut.todoapp.ui
 
+import android.content.res.Configuration.UI_MODE_NIGHT_NO
+import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -38,7 +41,6 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -64,35 +66,65 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
 import com.pashteut.todoapp.R
+import com.pashteut.todoapp.common.convertDateToString
 import com.pashteut.todoapp.model.Priority
 import com.pashteut.todoapp.model.ToDoItem
 import com.pashteut.todoapp.presentator.MainScreenViewModel
+import com.pashteut.todoapp.ui.theme.ToDoAppTheme
 import com.pashteut.todoapp.ui.theme.additionalColors
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun MainScreen(
-    navController: NavController,
+    addItemNavigation: () -> Unit,
+    editItemNavigation: (Long) -> Unit,
+    viewModel: MainScreenViewModel,
     modifier: Modifier = Modifier,
-    viewModel: MainScreenViewModel = hiltViewModel(),
+) {
+    val visibility by viewModel.doneItemsVisibility.collectAsStateWithLifecycle()
+    val list by viewModel.toDoItems.collectAsStateWithLifecycle()
+    val doneCount by viewModel.doneCount.collectAsStateWithLifecycle()
+
+    MainScreenContent(
+        addItemNavigation = addItemNavigation,
+        editItemNavigation = editItemNavigation,
+        doneItemsVisibility = visibility,
+        changeVisibility = { viewModel.changeDoneItemsVisibility() },
+        doneItemsCount = doneCount,
+        items = list,
+        deleteItem = viewModel::deleteItem,
+        changeIsDone = viewModel::changeIsDone,
+        modifier = modifier,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MainScreenContent(
+    addItemNavigation: () -> Unit,
+    editItemNavigation: (Long) -> Unit,
+    doneItemsVisibility: Boolean,
+    changeVisibility: () -> Unit,
+    doneItemsCount: Int,
+    items: List<ToDoItem>,
+    deleteItem: (Long) -> Unit,
+    changeIsDone: (Long) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(scrollState)
-    val visibility by viewModel.doneItemsVisibility.collectAsStateWithLifecycle()
-    val list by viewModel.toDoItems.collectAsStateWithLifecycle(emptyList())
-    val doneCount by viewModel.doneCount.collectAsStateWithLifecycle()
-
     Scaffold(
         modifier = modifier
             .fillMaxSize()
@@ -101,12 +133,9 @@ fun MainScreen(
             LargeTopAppBar(
                 title = {
                     AppBar(
-                        visibility = visibility,
-                        changeVisibility = {
-                            viewModel.doneItemsVisibility.value =
-                                !viewModel.doneItemsVisibility.value
-                        },
-                        doneCount = doneCount,
+                        visibility = doneItemsVisibility,
+                        changeVisibility = changeVisibility,
+                        doneCount = doneItemsCount,
                         scrollState = scrollState,
                     )
                 },
@@ -116,7 +145,7 @@ fun MainScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate(ScreenDetail()) },
+                onClick = addItemNavigation,
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier
                     .padding(
@@ -134,7 +163,7 @@ fun MainScreen(
         }
     ) { innerPadding ->
         LazyColumn(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .padding(innerPadding)
@@ -142,12 +171,12 @@ fun MainScreen(
                 .clip(RoundedCornerShape(15.dp))
                 .background(MaterialTheme.colorScheme.additionalColors.surfaceVariant),
         ) {
-            items(list, key = { it.hashCode() }) { item ->
+            items(items, key = { it.hashCode() }) { item ->
                 ToDoItemElement(
                     item = item,
-                    onDelete = viewModel::deleteItem,
-                    changeIsDone = viewModel::changeIsDone,
-                    onInfoIconClick = { navController.navigate(ScreenDetail(item.id)) },
+                    onDelete = deleteItem,
+                    changeIsItemDone = changeIsDone,
+                    onInfoIconClick = { editItemNavigation(item.id) },
                 )
             }
             item {
@@ -164,7 +193,7 @@ fun MainScreen(
                     },
                     modifier = Modifier
                         .fillMaxSize()
-                        .clickable { navController.navigate(ScreenDetail()) }
+                        .clickable { addItemNavigation() }
                         .clip(RoundedCornerShape(15.dp)),
                     colors = ListItemDefaults.colors(
                         containerColor = MaterialTheme.colorScheme.additionalColors.surfaceVariant,
@@ -240,7 +269,7 @@ private fun ToDoItemElement(
     item: ToDoItem,
     modifier: Modifier = Modifier,
     onDelete: (Long) -> Unit,
-    changeIsDone: (Long) -> Unit,
+    changeIsItemDone: (Long) -> Unit,
     onInfoIconClick: (Long) -> Unit = {},
 ) {
     var isRemoved by remember { mutableStateOf(false) }
@@ -277,7 +306,7 @@ private fun ToDoItemElement(
         }
         if (isDoneNeedToChange) {
             delay(300)
-            changeIsDone(item.id)
+            changeIsItemDone(item.id)
             isDoneNeedToChange = false
         }
     }
@@ -288,15 +317,21 @@ private fun ToDoItemElement(
             modifier = modifier
                 .combinedClickable(
                     onClick = {},
-                    onLongClick = {expanded = true }
+                    onLongClick = { expanded = true }
                 ),
             backgroundContent = {
                 SwipeBackground(
-                    swipeState = swipeState,
+                    swipeDirection = swipeState.dismissDirection,
                     itemIsDone = item.isDone
                 )
             },
-            content = { ToDoItemCard(item = item, onInfoIconClick = { onInfoIconClick(item.id) }) },
+            content = {
+                ToDoItemCard(
+                    item = item,
+                    onInfoIconClick = { onInfoIconClick(item.id) },
+                    onCheckBoxClick = changeIsItemDone,
+                )
+            },
             enableDismissFromStartToEnd = swipeEnabled,
             enableDismissFromEndToStart = swipeEnabled,
         )
@@ -316,7 +351,7 @@ private fun ToDoItemElement(
                         modifier = Modifier
                     )
                 },
-                onClick = { changeIsDone(item.id) },
+                onClick = { changeIsItemDone(item.id) },
                 modifier = Modifier.clip(RoundedCornerShape(12.dp))
             )
             DropdownMenuItem(
@@ -337,14 +372,25 @@ private fun ToDoItemElement(
 private fun ToDoItemCard(
     item: ToDoItem,
     modifier: Modifier = Modifier,
-    onInfoIconClick: () -> Unit = {},
+    onInfoIconClick: () -> Unit,
+    onCheckBoxClick: (Long) -> Unit,
 ) {
+
+    var deadlineString by remember { mutableStateOf("") }
+
+    LaunchedEffect(key1 = item.deadline) {
+        withContext(Dispatchers.Default) {
+            deadlineString = item.deadline?.convertDateToString() ?: ""
+        }
+    }
+
     ListItem(
         headlineContent = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
+                    .wrapContentHeight()
                     .offset(x = (-12).dp),
             ) {
                 when (item.priority) {
@@ -382,7 +428,7 @@ private fun ToDoItemCard(
                     )
                     if (item.deadline != null)
                         Text(
-                            text = item.deadline.convertDateToString(),
+                            text = deadlineString,
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.additionalColors.gray,
                         )
@@ -406,11 +452,10 @@ private fun ToDoItemCard(
         leadingContent = {
             Checkbox(
                 checked = item.isDone,
-                onCheckedChange = {},
-                enabled = false,
+                onCheckedChange = { onCheckBoxClick(item.id) },
                 colors = CheckboxDefaults.colors(
-                    disabledCheckedColor = MaterialTheme.colorScheme.additionalColors.green,
-                    disabledUncheckedColor =
+                    checkedColor = MaterialTheme.colorScheme.additionalColors.green,
+                    uncheckedColor =
                     if (item.priority == Priority.HIGH) MaterialTheme.colorScheme.error
                     else MaterialTheme.colorScheme.additionalColors.gray,
                     checkmarkColor = MaterialTheme.colorScheme.additionalColors.surfaceVariant,
@@ -418,7 +463,8 @@ private fun ToDoItemCard(
             )
         },
         modifier = modifier
-            .fillMaxSize()
+            .fillMaxWidth()
+            .wrapContentHeight()
             .clip(RoundedCornerShape(15.dp)),
         colors = ListItemDefaults.colors(
             containerColor = MaterialTheme.colorScheme.additionalColors.surfaceVariant,
@@ -429,16 +475,17 @@ private fun ToDoItemCard(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SwipeBackground(
-    swipeState: SwipeToDismissBoxState,
-    itemIsDone: Boolean = false
+    swipeDirection: SwipeToDismissBoxValue,
+    modifier: Modifier = Modifier,
+    itemIsDone: Boolean = false,
 ) {
-    val color = when (swipeState.dismissDirection) {
+    val color = when (swipeDirection) {
         SwipeToDismissBoxValue.StartToEnd -> if (itemIsDone) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.additionalColors.green
         SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.error
         SwipeToDismissBoxValue.Settled -> Color.Transparent
     }
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .clip(RoundedCornerShape(15.dp))
             .background(color)
@@ -446,7 +493,7 @@ private fun SwipeBackground(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        if (swipeState.dismissDirection == SwipeToDismissBoxValue.StartToEnd)
+        if (swipeDirection == SwipeToDismissBoxValue.StartToEnd)
             Icon(
                 painter = painterResource(
                     id = if (itemIsDone) R.drawable.close_icon
@@ -458,11 +505,141 @@ private fun SwipeBackground(
 
         Spacer(modifier = Modifier)
 
-        if (swipeState.dismissDirection == SwipeToDismissBoxValue.EndToStart)
+        if (swipeDirection == SwipeToDismissBoxValue.EndToStart)
             Icon(
                 painter = painterResource(id = R.drawable.delete_icon),
                 contentDescription = "Delete icon",
                 tint = Color.White,
             )
+    }
+}
+
+@Preview(name = "Dark Mode", showBackground = true, uiMode = UI_MODE_NIGHT_YES)
+@Preview(name = "Light Mode", showBackground = true, uiMode = UI_MODE_NIGHT_NO)
+@Composable
+fun MainScreenPreview() {
+    ToDoAppTheme {
+        MainScreenContent(
+            addItemNavigation = {},
+            editItemNavigation = {},
+            doneItemsVisibility = false,
+            changeVisibility = {},
+            doneItemsCount = 0,
+            items = listOf(
+                ToDoItem(
+                    id = 1,
+                    text = "Test",
+                    deadline = null,
+                    priority = Priority.LOW,
+                    isDone = false,
+                    createdDate = 8274356,
+                ),
+                ToDoItem(
+                    id = 1,
+                    text = "Something",
+                    deadline = 1797485723234,
+                    priority = Priority.HIGH,
+                    isDone = false,
+                    createdDate = 8274356,
+                ),
+                ToDoItem(
+                    id = 1,
+                    text = "Something",
+                    deadline = 1791485723234,
+                    priority = Priority.DEFAULT,
+                    isDone = true,
+                    createdDate = 8274356,
+                ),
+                ToDoItem(
+                    id = 1,
+                    text = "Testasliufdhsadiuhfgisadguhaisdughsadiufghsdaiguhaildfughsdilfugh",
+                    deadline = null,
+                    priority = Priority.LOW,
+                    isDone = false,
+                    createdDate = 8274356,
+                ),
+            ),
+            deleteItem = {},
+            changeIsDone = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppBarPreview() {
+    ToDoAppTheme {
+        AppBar(
+            visibility = true,
+            changeVisibility = {},
+            doneCount = 5,
+            scrollState = rememberTopAppBarState(),
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ToDoItemElementPreview() {
+    ToDoAppTheme {
+        ToDoItemElement(
+            item = ToDoItem(
+                id = 1,
+                text = "Test",
+                deadline = null,
+                priority = Priority.LOW,
+                isDone = false,
+                createdDate = 8274356,
+            ),
+            onDelete = {},
+            changeIsItemDone = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ToDoItemCardPreview() {
+    ToDoAppTheme {
+        ToDoItemCard(
+            item = ToDoItem(
+                id = 1,
+                text = "Test",
+                deadline = 1791485723234,
+                priority = Priority.DEFAULT,
+                isDone = true,
+                createdDate = 8274356,
+            ),
+            onInfoIconClick = {},
+            onCheckBoxClick = {},
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true)
+@Composable
+fun SwipeBackgroundPreview() {
+    ToDoAppTheme {
+        Column {
+            SwipeBackground(
+                swipeDirection = SwipeToDismissBoxValue.StartToEnd,
+                itemIsDone = false,
+                modifier = Modifier.height(70.dp),
+            )
+            Spacer(modifier = Modifier.height(15.dp))
+            SwipeBackground(
+                swipeDirection = SwipeToDismissBoxValue.StartToEnd,
+                itemIsDone = true,
+                modifier = Modifier.height(70.dp),
+            )
+            Spacer(modifier = Modifier.height(15.dp))
+            SwipeBackground(
+                swipeDirection = SwipeToDismissBoxValue.EndToStart,
+                itemIsDone = false,
+                modifier = Modifier.height(70.dp),
+            )
+        }
     }
 }

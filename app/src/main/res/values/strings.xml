@@ -12,7 +12,7 @@
     <string name="delete">Удалить</string>
     <string name="ok">Ок</string>
     <string name="cancel">Закрыть</string>
-    <string name="chooseDate">Закрыть</string>
+    <string name="chooseDate">Выберите дату</string>
     <string name="markIsDone">Отметить выполненным</string>
     <string name="markIsNotDone">Снять отметку о выполнении</string>
     <string name="enterTheText">Введите текст</string>

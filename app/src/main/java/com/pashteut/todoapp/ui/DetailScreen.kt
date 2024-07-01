@@ -1,6 +1,9 @@
 package com.pashteut.todoapp.ui
 
+import android.content.res.Configuration.UI_MODE_NIGHT_NO
+import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,8 +40,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,39 +52,59 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pashteut.todoapp.R
 import com.pashteut.todoapp.model.Priority
 import com.pashteut.todoapp.presentator.DetailScreenViewModel
+import com.pashteut.todoapp.ui.theme.ToDoAppTheme
 import com.pashteut.todoapp.ui.theme.additionalColors
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 @Composable
 fun DetailScreen(
-    id: Long,
-    navController: NavController
+    viewModel: DetailScreenViewModel,
+    mainScreenNavigation: () -> Unit,
 ) {
-    val viewModel = hiltViewModel<DetailScreenViewModel>()
-    val priority by viewModel.priority.collectAsState()
-    val text by viewModel.text.collectAsState()
-    LaunchedEffect(key1 = id) {
-        viewModel.setPickedItem(id)
-    }
+    val priority by viewModel.priority.collectAsStateWithLifecycle()
+    val text by viewModel.text.collectAsStateWithLifecycle()
+    val textDeadline by viewModel.textDate.collectAsStateWithLifecycle()
 
+    DetailScreenContent(
+        mainScreenNavigation = mainScreenNavigation,
+        saveItem = viewModel::saveToDoItem,
+        text = text,
+        onTextChanged = {text -> viewModel.text.value = text},
+        priority = priority,
+        setPriority = {priority -> viewModel.priority.value = priority},
+        textDeadline = textDeadline,
+        setDeadline = {deadline -> viewModel.deadLineTime.value = deadline},
+        deleteItem = viewModel::deleteItem,
+    )
+}
+
+@Composable
+private fun DetailScreenContent(
+    mainScreenNavigation: () -> Unit,
+    saveItem: () -> Boolean,
+    text: String,
+    onTextChanged: (String) -> Unit,
+    priority: Priority,
+    setPriority: (Priority) -> Unit,
+    textDeadline: String,
+    setDeadline: (Long?) -> Unit,
+    deleteItem: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         topBar = {
-            AppBar(navController, saveItem = viewModel::saveToDoItem)
+            AppBar(mainScreenNavigation, saveItem = saveItem)
         }
     ) { innerPadding ->
         val scrollState = rememberScrollState()
-        val deadline by viewModel.deadLineTime.collectAsState()
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -92,26 +113,28 @@ fun DetailScreen(
         ) {
             OutlinedTextField(
                 value = text,
-                onValueChange = { viewModel.text.value = it },
+                onValueChange = onTextChanged,
                 modifier = Modifier
                     .fillMaxWidth()
                     .defaultMinSize(minHeight = 120.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .padding(5.dp),
             )
-            PriorityBox(priority) {
-                viewModel.priority.value = it
-            }
+            PriorityBox(
+                priority = priority,
+                setPriority = setPriority
+            )
             HorizontalDivider()
-            DeadlineBox(deadline) {
-                viewModel.deadLineTime.value = it
-            }
+            DeadlineBox(
+                deadline = textDeadline,
+                setDeadline = setDeadline,
+            )
             HorizontalDivider()
             Spacer(modifier = Modifier.height(5.dp))
             TextButton(
                 onClick = {
-                    viewModel.deleteItem()
-                    navController.navigate(ScreenMain)
+                    deleteItem()
+                    mainScreenNavigation()
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -136,13 +159,12 @@ fun DetailScreen(
             }
         }
     }
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppBar(
-    navController: NavController,
+    navigation: () -> Unit,
     saveItem: () -> Boolean
 ) {
     val context = LocalContext.current
@@ -150,7 +172,7 @@ private fun AppBar(
     TopAppBar(
         title = {},
         navigationIcon = {
-            IconButton(onClick = { navController.navigate(ScreenMain) }) {
+            IconButton(onClick = navigation) {
                 Icon(
                     painter = painterResource(id = R.drawable.close_icon),
                     contentDescription = "close"
@@ -159,8 +181,8 @@ private fun AppBar(
         },
         actions = {
             TextButton(onClick = {
-                if(saveItem())
-                    navController.navigate(ScreenMain)
+                if (saveItem())
+                    navigation()
                 else
                     Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
             }) {
@@ -263,7 +285,7 @@ private fun PriorityBox(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DeadlineBox(
-    deadline: Long? = null,
+    deadline: String = "",
     setDeadline: (Long?) -> Unit
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
@@ -287,9 +309,9 @@ private fun DeadlineBox(
                 stringResource(id = R.string.toDoUntil),
                 fontSize = 20.sp,
             )
-            if (deadline != null) {
+            AnimatedVisibility(visible = deadline != "") {
                 Text(
-                    deadline.convertDateToString(),
+                    deadline,
                     fontSize = 15.sp,
                     modifier = Modifier,
                     color = MaterialTheme.colorScheme.primary,
@@ -298,7 +320,7 @@ private fun DeadlineBox(
         }
 
         Switch(
-            checked = deadline != null,
+            checked = deadline != "",
             onCheckedChange = {
                 showDatePicker = it
                 if (!it)
@@ -349,8 +371,95 @@ private fun DeadlineBox(
     }
 }
 
-fun Long.convertDateToString(): String {
-    val selectedDate = LocalDate.ofEpochDay(this / (24 * 60 * 60 * 1000))
-    val formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale.getDefault())
-    return selectedDate.format(formatter)
+@Preview(name = "Dark Mode", showBackground = true, uiMode = UI_MODE_NIGHT_YES)
+@Preview(name = "Light Mode", showBackground = true, uiMode = UI_MODE_NIGHT_NO)
+@Composable
+fun DetailScreenPreview1() {
+    ToDoAppTheme {
+        DetailScreenContent(
+            mainScreenNavigation = {},
+            saveItem = { true },
+            text = "some text",
+            onTextChanged = {},
+            priority = Priority.LOW,
+            setPriority = {},
+            textDeadline = "",
+            setDeadline = {},
+            deleteItem = {},
+        )
+    }
+}
+
+@Preview(name = "Dark Mode", showBackground = true, uiMode = UI_MODE_NIGHT_YES)
+@Preview(name = "Light Mode", showBackground = true, uiMode = UI_MODE_NIGHT_NO)
+@Composable
+fun DetailScreenPreview2() {
+    ToDoAppTheme {
+        DetailScreenContent(
+            mainScreenNavigation = {},
+            saveItem = { true },
+            text = "i need to eat",
+            onTextChanged = {},
+            priority = Priority.HIGH,
+            setPriority = {},
+            textDeadline = "07.08.2024",
+            setDeadline = {},
+            deleteItem = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AppBarAppBarPreview1() {
+    ToDoAppTheme {
+        AppBar(
+            navigation = { },
+            saveItem = { true },
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PriorityBoxPreview1() {
+    ToDoAppTheme {
+        PriorityBox(
+            priority = Priority.DEFAULT,
+            setPriority = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PriorityBoxPreview2() {
+    ToDoAppTheme {
+        PriorityBox(
+            priority = Priority.HIGH,
+            setPriority = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DeadlineBoxPreview1() {
+    ToDoAppTheme {
+        DeadlineBox(
+            deadline = "07.08.2024",
+            setDeadline = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DeadlineBoxPreview2() {
+    ToDoAppTheme {
+        DeadlineBox(
+            deadline = "",
+            setDeadline = {},
+        )
+    }
 }

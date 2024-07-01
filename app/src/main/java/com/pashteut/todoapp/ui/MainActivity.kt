@@ -4,10 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.pashteut.todoapp.presentator.DetailScreenViewModel
 import com.pashteut.todoapp.ui.theme.ToDoAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.Serializable
@@ -25,11 +27,20 @@ class MainActivity : ComponentActivity() {
                     startDestination = ScreenMain
                 ) {
                     composable<ScreenMain> {
-                        MainScreen(navController = navController)
+                        MainScreen(
+                            addItemNavigation = { navController.navigate(ScreenDetail()) },
+                            editItemNavigation = { id -> navController.navigate(ScreenDetail(id)) },
+                            viewModel = hiltViewModel()
+                        )
                     }
                     composable<ScreenDetail> {
                         val args = it.toRoute<ScreenDetail>()
-                        DetailScreen(navController = navController, id = args.id)
+                        val viewModel : DetailScreenViewModel = hiltViewModel()
+                        viewModel.setPickedItem(args.id)
+                        DetailScreen(
+                            mainScreenNavigation = { navController.navigateUp() },
+                            viewModel = viewModel
+                        )
                     }
                 }
             }

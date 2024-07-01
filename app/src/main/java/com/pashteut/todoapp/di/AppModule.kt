@@ -1,6 +1,7 @@
 package com.pashteut.todoapp.di
 
 import android.content.Context
+import com.pashteut.todoapp.common.AppDispatchers
 import com.pashteut.todoapp.model.ToDoItemDao
 import com.pashteut.todoapp.model.ToDoItemsDatabase
 import dagger.Module
@@ -17,4 +18,8 @@ object AppModule {
     @Singleton
     fun provideTodoItemsDao(@ApplicationContext context: Context): ToDoItemDao = ToDoItemsDatabase.getInstance(context).toDoItemDao()
 
+
+    @Provides
+    @Singleton
+    fun provideAppCoroutineDispatchers(): AppDispatchers = AppDispatchers()
 }

@@ -23,6 +23,9 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        val defaultToken: String by project
+        buildConfigField ("String", "DEFAULT_APITOKEN", "\"Bearer Thalion\"")
+        buildConfigField ("String", "REQUEST_TOKEN_URL", "\"https://oauth.yandex.ru/authorize?response_type=token&client_id=0d0970774e284fa8ba9ff70b6b06479a\"")
     }
 
     buildTypes {
@@ -43,6 +46,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -79,12 +83,25 @@ dependencies {
 
     implementation(libs.dagger.hilt.android)
     kapt(libs.dagger.hilt.compiler)
+    implementation(libs.hilt.work)
+    kapt(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
 
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
     implementation(libs.navigation.compose)
-    implementation(libs.hilt.navigation.compose)
     implementation(libs.kotlin.serialization)
+
+    //Ktor
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.client.logging)
+
+    implementation(libs.slf4j.android)
+    implementation(libs.datastore.preferences)
+    implementation(libs.work.runtime.ktx)
 
     implementation(kotlin("reflect"))
 }

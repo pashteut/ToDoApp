@@ -16,4 +16,14 @@
     <string name="markIsDone">Отметить выполненным</string>
     <string name="markIsNotDone">Снять отметку о выполнении</string>
     <string name="enterTheText">Введите текст</string>
+    <string name="saveError">Ошибка сохранения</string>
+    <string name="deleteError">Ошибка удаления</string>
+    <string name="updateError">Ошибка изменения</string>
+    <string name="loadError">Ошибка загрузки данных</string>
+    <string name="authorizationError">Ошибка авторизации</string>
+    <string name="authorizationSuccess">Авторизация прошла успешно</string>
+    <string name="authorizationReset">Авторизация сброшена</string>
+    <string name="getToken">Получить токен</string>
+    <string name="resetToken">Сбросить токен</string>
+    <string name="token">Токен</string>
 </resources>

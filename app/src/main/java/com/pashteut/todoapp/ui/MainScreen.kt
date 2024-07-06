@@ -26,6 +26,8 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenu
@@ -40,12 +42,16 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarDefaults.largeTopAppBarColors
 import androidx.compose.material3.TopAppBarState
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -60,6 +66,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -85,21 +92,24 @@ import kotlinx.coroutines.withContext
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-
 @Composable
 fun MainScreen(
     addItemNavigation: () -> Unit,
-    editItemNavigation: (Long) -> Unit,
+    editItemNavigation: (String) -> Unit,
+    authNavigation: () -> Unit,
     viewModel: MainScreenViewModel,
     modifier: Modifier = Modifier,
 ) {
     val visibility by viewModel.doneItemsVisibility.collectAsStateWithLifecycle()
     val list by viewModel.toDoItems.collectAsStateWithLifecycle()
     val doneCount by viewModel.doneCount.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val userMessage by viewModel.userMessage.collectAsStateWithLifecycle()
 
     MainScreenContent(
         addItemNavigation = addItemNavigation,
         editItemNavigation = editItemNavigation,
+        authNavigation = authNavigation,
         doneItemsVisibility = visibility,
         changeVisibility = { viewModel.changeDoneItemsVisibility() },
         doneItemsCount = doneCount,
@@ -107,6 +117,9 @@ fun MainScreen(
         deleteItem = viewModel::deleteItem,
         changeIsDone = viewModel::changeIsDone,
         modifier = modifier,
+        onRefresh = viewModel::refreshItems,
+        isRefreshing = isRefreshing,
+        userMessage = userMessage,
     )
 }
 
@@ -114,29 +127,44 @@ fun MainScreen(
 @Composable
 private fun MainScreenContent(
     addItemNavigation: () -> Unit,
-    editItemNavigation: (Long) -> Unit,
+    editItemNavigation: (String) -> Unit,
+    authNavigation: () -> Unit,
     doneItemsVisibility: Boolean,
     changeVisibility: () -> Unit,
     doneItemsCount: Int,
     items: List<ToDoItem>,
-    deleteItem: (Long) -> Unit,
-    changeIsDone: (Long) -> Unit,
+    deleteItem: (String) -> Unit,
+    changeIsDone: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onRefresh: () -> Unit,
+    isRefreshing: Boolean,
+    userMessage: String?,
 ) {
     val scrollState = rememberTopAppBarState()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(scrollState)
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(scrollState)
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(key1 = userMessage) {
+        userMessage?.let {
+            snackbarHostState.showSnackbar(it)
+        }
+    }
     Scaffold(
         modifier = modifier
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             LargeTopAppBar(
                 title = {
                     AppBar(
+                        authNavigation = authNavigation,
                         visibility = doneItemsVisibility,
                         changeVisibility = changeVisibility,
                         doneCount = doneItemsCount,
                         scrollState = scrollState,
+                        onRefresh = onRefresh,
                     )
                 },
                 scrollBehavior = scrollBehavior,
@@ -162,46 +190,81 @@ private fun MainScreenContent(
 
         }
     ) { innerPadding ->
-        LazyColumn(
+        val pullToRefreshState = rememberPullToRefreshState()
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
+                .fillMaxSize()
+                .nestedScroll(pullToRefreshState.nestedScrollConnection)
                 .padding(innerPadding)
-                .padding(start = 10.dp, end = 10.dp, bottom = 10.dp)
-                .clip(RoundedCornerShape(15.dp))
-                .background(MaterialTheme.colorScheme.additionalColors.surfaceVariant),
         ) {
-            items(items, key = { it.hashCode() }) { item ->
-                ToDoItemElement(
-                    item = item,
-                    onDelete = deleteItem,
-                    changeIsItemDone = changeIsDone,
-                    onInfoIconClick = { editItemNavigation(item.id) },
-                )
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(start = 10.dp, end = 10.dp, bottom = 10.dp)
+                    .clip(RoundedCornerShape(15.dp))
+                    .background(MaterialTheme.colorScheme.additionalColors.surfaceVariant),
+            ) {
+                items(items, key = { it.hashCode() }) { item ->
+                    ToDoItemElement(
+                        item = item,
+                        onDelete = deleteItem,
+                        changeIsItemDone = changeIsDone,
+                        onInfoIconClick = { editItemNavigation(item.id) },
+                    )
+                }
+                item {
+                    AddItemBar(addItemNavigation = addItemNavigation)
+                }
             }
-            item {
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            text = stringResource(id = R.string.newDeal),
-                            fontSize = 15.sp,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(start = 20.dp)
-                                .alpha(.7f),
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable { addItemNavigation() }
-                        .clip(RoundedCornerShape(15.dp)),
-                    colors = ListItemDefaults.colors(
-                        containerColor = MaterialTheme.colorScheme.additionalColors.surfaceVariant,
-                    ),
-                )
+
+            if (pullToRefreshState.isRefreshing) {
+                LaunchedEffect(true) {
+                    onRefresh()
+                }
             }
+
+            LaunchedEffect(isRefreshing) {
+                if (isRefreshing) {
+                    pullToRefreshState.startRefresh()
+                } else {
+                    pullToRefreshState.endRefresh()
+                }
+            }
+
+            PullToRefreshContainer(
+                state = pullToRefreshState,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+            )
         }
     }
+}
+
+@Composable
+fun AddItemBar(
+    addItemNavigation: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ListItem(
+        headlineContent = {
+            Text(
+                text = stringResource(id = R.string.newDeal),
+                fontSize = 15.sp,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(start = 20.dp)
+                    .alpha(.7f),
+            )
+        },
+        modifier = modifier
+            .fillMaxSize()
+            .clickable { addItemNavigation() }
+            .clip(RoundedCornerShape(15.dp)),
+        colors = ListItemDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.additionalColors.surfaceVariant,
+        ),
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -209,11 +272,14 @@ private fun MainScreenContent(
 private fun AppBar(
     visibility: Boolean,
     changeVisibility: () -> Unit,
+    authNavigation: () -> Unit,
     doneCount: Int,
     modifier: Modifier = Modifier,
     scrollState: TopAppBarState,
+    onRefresh: () -> Unit,
 ) {
     val collapseProgress = scrollState.heightOffset / scrollState.heightOffsetLimit
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -227,7 +293,8 @@ private fun AppBar(
                         (collapseProgress * -20f * density).roundToInt(),
                         (collapseProgress * 8 * density).roundToInt()
                     )
-                },
+                }
+                .clickable { authNavigation() },
             style = MaterialTheme.typography.titleLarge,
         )
 
@@ -243,20 +310,32 @@ private fun AppBar(
                     .alpha(((1f - collapseProgress) * 0.7f).pow(2)),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            IconButton(
-                onClick = changeVisibility,
+            Row(
                 modifier = Modifier
                     .offset {
                         IntOffset(0, (collapseProgress * -30 * density).roundToInt())
                     }
             ) {
-                Icon(
-                    painter =
-                    if (visibility) painterResource(id = R.drawable.visibility_off_icon)
-                    else painterResource(id = R.drawable.visibility_icon),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    contentDescription = "Visibility off icon",
-                )
+                IconButton(
+                    onClick = onRefresh,
+                ) {
+                    Icon(
+                        painter = rememberVectorPainter(image = Icons.Default.Refresh),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        contentDescription = "Visibility off icon",
+                    )
+                }
+                IconButton(
+                    onClick = changeVisibility,
+                ) {
+                    Icon(
+                        painter =
+                        if (visibility) painterResource(id = R.drawable.visibility_off_icon)
+                        else painterResource(id = R.drawable.visibility_icon),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        contentDescription = "Visibility off icon",
+                    )
+                }
             }
         }
 
@@ -268,9 +347,9 @@ private fun AppBar(
 private fun ToDoItemElement(
     item: ToDoItem,
     modifier: Modifier = Modifier,
-    onDelete: (Long) -> Unit,
-    changeIsItemDone: (Long) -> Unit,
-    onInfoIconClick: (Long) -> Unit = {},
+    onDelete: (String) -> Unit,
+    changeIsItemDone: (String) -> Unit,
+    onInfoIconClick: (String) -> Unit = {},
 ) {
     var isRemoved by remember { mutableStateOf(false) }
     var isDoneNeedToChange by remember { mutableStateOf(false) }
@@ -373,7 +452,7 @@ private fun ToDoItemCard(
     item: ToDoItem,
     modifier: Modifier = Modifier,
     onInfoIconClick: () -> Unit,
-    onCheckBoxClick: (Long) -> Unit,
+    onCheckBoxClick: (String) -> Unit,
 ) {
 
     var deadlineString by remember { mutableStateOf("") }
@@ -527,7 +606,7 @@ fun MainScreenPreview() {
             doneItemsCount = 0,
             items = listOf(
                 ToDoItem(
-                    id = 1,
+                    id = "",
                     text = "Test",
                     deadline = null,
                     priority = Priority.LOW,
@@ -535,7 +614,7 @@ fun MainScreenPreview() {
                     createdDate = 8274356,
                 ),
                 ToDoItem(
-                    id = 1,
+                    id = "",
                     text = "Something",
                     deadline = 1797485723234,
                     priority = Priority.HIGH,
@@ -543,7 +622,7 @@ fun MainScreenPreview() {
                     createdDate = 8274356,
                 ),
                 ToDoItem(
-                    id = 1,
+                    id = "",
                     text = "Something",
                     deadline = 1791485723234,
                     priority = Priority.DEFAULT,
@@ -551,7 +630,7 @@ fun MainScreenPreview() {
                     createdDate = 8274356,
                 ),
                 ToDoItem(
-                    id = 1,
+                    id = "",
                     text = "Testasliufdhsadiuhfgisadguhaisdughsadiufghsdaiguhaildfughsdilfugh",
                     deadline = null,
                     priority = Priority.LOW,
@@ -561,6 +640,10 @@ fun MainScreenPreview() {
             ),
             deleteItem = {},
             changeIsDone = {},
+            authNavigation = {},
+            onRefresh = {},
+            isRefreshing = false,
+            userMessage = "",
         )
     }
 }
@@ -573,8 +656,10 @@ fun AppBarPreview() {
         AppBar(
             visibility = true,
             changeVisibility = {},
+            authNavigation = {},
             doneCount = 5,
             scrollState = rememberTopAppBarState(),
+            onRefresh = {},
         )
     }
 }
@@ -585,7 +670,7 @@ fun ToDoItemElementPreview() {
     ToDoAppTheme {
         ToDoItemElement(
             item = ToDoItem(
-                id = 1,
+                id = "",
                 text = "Test",
                 deadline = null,
                 priority = Priority.LOW,
@@ -604,7 +689,7 @@ fun ToDoItemCardPreview() {
     ToDoAppTheme {
         ToDoItemCard(
             item = ToDoItem(
-                id = 1,
+                id = "",
                 text = "Test",
                 deadline = 1791485723234,
                 priority = Priority.DEFAULT,

@@ -14,6 +14,16 @@ import com.pashteut.todoapp.ui.theme.ToDoAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.Serializable
 
+/**
+ * MainActivity serves as the entry point for the ToDo application.
+ *
+ * This activity sets up the main theme of the application and initializes the navigation components.
+ * It defines the navigation graph for the application, specifying the start destination and the composable screens for main, detail, and authentication flows.
+ * Navigation actions are defined to handle transitions between these screens.
+ *
+ * Utilizes Android Jetpack's Navigation component for managing UI navigation and Hilt for dependency injection.
+ */
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,6 +40,7 @@ class MainActivity : ComponentActivity() {
                         MainScreen(
                             addItemNavigation = { navController.navigate(ScreenDetail()) },
                             editItemNavigation = { id -> navController.navigate(ScreenDetail(id)) },
+                            authNavigation = { navController.navigate(ScreenAuth) },
                             viewModel = hiltViewModel()
                         )
                     }
@@ -42,6 +53,12 @@ class MainActivity : ComponentActivity() {
                             viewModel = viewModel
                         )
                     }
+                    composable<ScreenAuth> {
+                        AuthScreen(
+                            mainScreenNavigation = { navController.navigate(ScreenMain) },
+                            viewModel = hiltViewModel()
+                        )
+                    }
                 }
             }
         }
@@ -52,4 +69,7 @@ class MainActivity : ComponentActivity() {
 object ScreenMain
 
 @Serializable
-data class ScreenDetail(val id: Long = -1)
+data class ScreenDetail(val id: String? = null)
+
+@Serializable
+object ScreenAuth

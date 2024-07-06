@@ -38,6 +38,10 @@ val darkColors = Colors(
     supportOverlay = Color(0x52000000),
 )
 
+/**
+ * Defines the color palette for the ToDo application's UI theme.
+ */
+
 data class Colors(
     val blue: Color,
     val red: Color,

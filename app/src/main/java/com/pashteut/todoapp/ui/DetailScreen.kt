@@ -76,11 +76,11 @@ fun DetailScreen(
         mainScreenNavigation = mainScreenNavigation,
         saveItem = viewModel::saveToDoItem,
         text = text,
-        onTextChanged = {text -> viewModel.text.value = text},
+        onTextChanged = { changedText -> viewModel.setText(changedText) },
         priority = priority,
-        setPriority = {priority -> viewModel.priority.value = priority},
+        setPriority = { changedPriority -> viewModel.setPriority(changedPriority) },
         textDeadline = textDeadline,
-        setDeadline = {deadline -> viewModel.deadLineTime.value = deadline},
+        setDeadline = { deadline -> viewModel.setDeadLineTime(deadline) },
         deleteItem = viewModel::deleteItem,
     )
 }

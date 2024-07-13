@@ -12,7 +12,6 @@ plugins {
 
 configure<BaseAppModuleExtension>{
     baseAndroidConfig()
-    version = AndroidConst.VERSION_CODE
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
     }

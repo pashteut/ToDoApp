@@ -16,9 +16,10 @@ tgReporter{
 
 
 android {
-
     defaultConfig {
         applicationId = "com.pashteut.todoapp"
+        version = 1
+        versionCode = 1
         versionName = "1.0"
     }
 }

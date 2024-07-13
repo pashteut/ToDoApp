@@ -1,5 +1,6 @@
 package com.pashteut.todoapp.plugins.tasks
 
+import com.android.build.gradle.AppExtension
 import com.pashteut.todoapp.plugins.TgApi
 import kotlinx.coroutines.runBlocking
 import org.gradle.api.DefaultTask
@@ -52,9 +53,10 @@ abstract class TgTask @Inject constructor(
                     else
                         tgApi.sendMessage("Build finished", token, chatId)
 
+                    val version = project.extensions.getByType(AppExtension::class.java).defaultConfig.versionCode
                     tgApi.sendFileWithNewName(
                         file = it,
-                        newFileName = "todolist-${appVariant.get()}-${AndroidConst.VERSION_CODE}.apk",
+                        newFileName = "todolist-${appVariant.get()}-$version.apk",
                         token = token,
                         chatId = chatId
                     )

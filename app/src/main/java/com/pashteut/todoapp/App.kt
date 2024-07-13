@@ -7,8 +7,8 @@ import android.net.Network
 import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.WorkManager
-import com.pashteut.todoapp.workers.MyWorkerFactory
-import com.pashteut.todoapp.workers.SyncRepositoryWorker
+import com.pashteut.todoapp.data.worker.MyWorkerFactory
+import com.pashteut.todoapp.data.worker.SyncRepositoryWorker
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 

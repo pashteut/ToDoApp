@@ -1,0 +1,5 @@
+<resources>
+    <string name="getToken">Получить токен</string>
+    <string name="resetToken">Сбросить токен</string>
+    <string name="token">Токен</string>
+</resources>

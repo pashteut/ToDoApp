@@ -1,0 +1,9 @@
+<resources>
+    <string name="newDeal">Новое</string>
+    <string name="doneCount">Выполненно - %d</string>
+    <string name="myDeals">Мои дела</string>
+    <string name="toDoUntil">Сделать до</string>
+    <string name="delete">Удалить</string>
+    <string name="markIsDone">Отметить выполненным</string>
+    <string name="markIsNotDone">Снять отметку о выполнении</string>
+</resources>

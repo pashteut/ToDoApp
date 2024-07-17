@@ -1,4 +1,6 @@
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google {
             content {
@@ -21,4 +23,12 @@ dependencyResolutionManagement {
 
 rootProject.name = "ToDoApp"
 include(":app")
- 
+include(":core:todo-api")
+include(":core:common")
+include(":core:database")
+include(":core:data")
+include(":features:common")
+include(":core:ui-kit")
+include(":features:todo-details")
+include(":features:todo-list")
+include(":features:todo-auth")

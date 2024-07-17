@@ -1,0 +1,12 @@
+<resources>
+    <string name="delete">Удалить</string>
+    <string name="enterTheText">Введите текст</string>
+    <string name="priority">Важность</string>
+    <string name="no">Нет</string>
+    <string name="lowPriority">Низкий</string>
+    <string name="highPriority">!!!Высокий</string>
+    <string name="save">Сохранить</string>
+    <string name="toDoUntil">Сделать до</string>
+    <string name="ok">Ок</string>
+    <string name="cancel">Закрыть</string>
+</resources>

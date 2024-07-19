@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings">Настройки</string>
+    <string name="theme">Тема</string>
+    <string name="light">Светлая тема</string>
+    <string name="dark">Темная тема</string>
+    <string name="system">Как в системе</string>
+    <string name="aboutApp">О приложении</string>
+</resources>

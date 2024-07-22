@@ -97,7 +97,6 @@ import kotlin.math.roundToInt
 fun MainScreen(
     addItemNavigation: () -> Unit,
     editItemNavigation: (String) -> Unit,
-    authNavigation: () -> Unit,
     settingsNavigation: () -> Unit,
     viewModel: TodoListViewModel,
     modifier: Modifier = Modifier,
@@ -111,7 +110,6 @@ fun MainScreen(
     MainScreenContent(
         addItemNavigation = addItemNavigation,
         editItemNavigation = editItemNavigation,
-        authNavigation = authNavigation,
         settingsNavigation = settingsNavigation,
         doneItemsVisibility = visibility,
         changeVisibility = { viewModel.changeDoneItemsVisibility() },
@@ -131,7 +129,6 @@ fun MainScreen(
 private fun MainScreenContent(
     addItemNavigation: () -> Unit,
     editItemNavigation: (String) -> Unit,
-    authNavigation: () -> Unit,
     settingsNavigation: () -> Unit,
     doneItemsVisibility: Boolean,
     changeVisibility: () -> Unit,
@@ -163,7 +160,6 @@ private fun MainScreenContent(
             LargeTopAppBar(
                 title = {
                     AppBar(
-                        authNavigation = authNavigation,
                         visibility = doneItemsVisibility,
                         changeVisibility = changeVisibility,
                         doneCount = doneItemsCount,
@@ -289,7 +285,6 @@ fun AddItemBar(
 private fun AppBar(
     visibility: Boolean,
     changeVisibility: () -> Unit,
-    authNavigation: () -> Unit,
     doneCount: Int,
     modifier: Modifier = Modifier,
     scrollState: TopAppBarState,
@@ -310,8 +305,7 @@ private fun AppBar(
                         (collapseProgress * -20f * density).roundToInt(),
                         (collapseProgress * 8 * density).roundToInt()
                     )
-                }
-                .clickable { authNavigation() },
+                },
             style = MaterialTheme.typography.titleLarge,
         )
 
@@ -654,7 +648,6 @@ fun MainScreenPreview() {
             ),
             deleteItem = {},
             changeIsDone = {},
-            authNavigation = {},
             onRefresh = {},
             isRefreshing = false,
             userMessage = "",
@@ -671,7 +664,6 @@ fun AppBarPreview() {
         AppBar(
             visibility = true,
             changeVisibility = {},
-            authNavigation = {},
             doneCount = 5,
             scrollState = rememberTopAppBarState(),
             onRefresh = {},

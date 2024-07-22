@@ -42,12 +42,12 @@ import com.pashteut.todoapp.features.todo_auth.ui_logic.AuthScreenViewModel
 
 @Composable
 fun AuthScreen(
-    mainScreenNavigation: () -> Unit,
+    backNavigation: () -> Unit,
     viewModel: AuthScreenViewModel,
 ) {
     val uiMessage by viewModel.message.collectAsStateWithLifecycle()
     AuthScreenContent(
-        mainScreenNavigation = mainScreenNavigation,
+        mainScreenNavigation = backNavigation,
         uiMessage = uiMessage,
         setAuthToken = viewModel::setToken,
         logout = viewModel::logout,

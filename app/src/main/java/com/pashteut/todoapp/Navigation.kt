@@ -33,7 +33,6 @@ fun Navigation() {
                 MainScreen(
                     addItemNavigation = { navController.navigate(ScreenDetail()) },
                     editItemNavigation = { id -> navController.navigate(ScreenDetail(id)) },
-                    authNavigation = { navController.navigate(ScreenAuth) },
                     settingsNavigation = { navController.navigate(ScreenSettings) },
                     viewModel = hiltViewModel(),
                 )
@@ -62,7 +61,7 @@ fun Navigation() {
             }
             composable<ScreenAuth> {
                 AuthScreen(
-                    mainScreenNavigation = { navController.navigate(ScreenMain) },
+                    backNavigation = { navController.navigateUp() },
                     viewModel = hiltViewModel()
                 )
             }
@@ -77,6 +76,7 @@ fun Navigation() {
                 SettingsScreen(
                     backNavigation = { navController.navigateUp() },
                     aboutScreenNavigation = { navController.navigate(ScreenAbout) },
+                    authNavigation = { navController.navigate(ScreenAuth) },
                     viewModel = hiltViewModel(),
                 )
             }

@@ -6,4 +6,5 @@
     <string name="dark">Темная тема</string>
     <string name="system">Как в системе</string>
     <string name="aboutApp">О приложении</string>
+    <string name="auth">Авторизация</string>
 </resources>

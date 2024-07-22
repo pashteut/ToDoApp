@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -44,6 +45,7 @@ import com.pashteut.todoapp.ui_kit.theme_state.ThemeState
 fun SettingsScreen(
     backNavigation: () -> Unit,
     aboutScreenNavigation: () -> Unit,
+    authNavigation: () -> Unit,
     viewModel: SettingsScreenViewModel,
 ) {
     val themeState by viewModel.themeState.collectAsStateWithLifecycle()
@@ -85,11 +87,41 @@ fun SettingsScreen(
                 modifier = Modifier.background(Color.Transparent)
             )
             HorizontalDivider()
+            AuthBar(
+                authNavigation = authNavigation,
+            )
+            HorizontalDivider()
             AboutAppBar(
                 aboutScreenNavigation = aboutScreenNavigation,
             )
         }
     }
+}
+
+@Composable
+fun AuthBar(
+    authNavigation: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ListItem(
+        headlineContent = {
+            Text(
+                text = stringResource(id = R.string.auth),
+                style = MaterialTheme.typography.titleMedium
+            )
+        },
+        leadingContent = {
+            Icon(
+                imageVector = Icons.Filled.Person,
+                contentDescription = "theme",
+            )
+        },
+        modifier = modifier
+            .clickable { authNavigation() },
+        colors = ListItemDefaults.colors(
+            containerColor = Color.Transparent,
+        ),
+    )
 }
 
 @Composable
@@ -107,7 +139,10 @@ fun ThemeSettings(
     ) {
         ListItem(
             headlineContent = {
-                Text(text = stringResource(id = R.string.theme))
+                Text(
+                    text = stringResource(id = R.string.theme),
+                    style = MaterialTheme.typography.titleMedium
+                )
             },
             leadingContent = {
                 Icon(
@@ -140,7 +175,8 @@ fun ThemeSettings(
                                     ThemeState.Light -> stringResource(id = R.string.light)
                                     ThemeState.Dark -> stringResource(id = R.string.dark)
                                     ThemeState.System -> stringResource(id = R.string.system)
-                                }
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
                             )
                         },
                         leadingContent = {
@@ -168,7 +204,10 @@ fun AboutAppBar(
 ) {
     ListItem(
         headlineContent = {
-            Text(text = stringResource(id = R.string.aboutApp))
+            Text(
+                text = stringResource(id = R.string.aboutApp),
+                style = MaterialTheme.typography.titleMedium
+            )
         },
         leadingContent = {
             Icon(

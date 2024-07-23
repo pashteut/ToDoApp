@@ -9,9 +9,9 @@ plugins {
 tgReporter{
     token.set(providers.environmentVariable("TG_TOKEN"))
     chatId.set(providers.environmentVariable("TG_CHAT"))
-    enableApkCheck.set(true)
+    enableApkCheck.set(false)
     maxApkSize.set(20f)
-    enableApkDetails.set(true)
+    enableApkDetails.set(false)
 }
 
 
@@ -29,6 +29,8 @@ dependencies {
     implementation(projects.features.todoList)
     implementation(projects.features.todoDetails)
     implementation(projects.features.todoAuth)
+    implementation(projects.features.todoSettings)
+    implementation(projects.features.todoAbout)
     implementation(projects.features.common)
     implementation(projects.core.data)
     implementation(projects.core.common)

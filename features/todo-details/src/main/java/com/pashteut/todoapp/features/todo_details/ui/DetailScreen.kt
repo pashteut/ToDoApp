@@ -4,8 +4,8 @@ import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,16 +20,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
@@ -39,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,7 +58,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -114,6 +118,7 @@ private fun DetailScreenContent(
             OutlinedTextField(
                 value = text,
                 onValueChange = onTextChanged,
+                textStyle = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier
                     .fillMaxWidth()
                     .defaultMinSize(minHeight = 120.dp)
@@ -121,7 +126,7 @@ private fun DetailScreenContent(
                     .padding(5.dp),
             )
             PriorityBox(
-                priority = priority,
+                selectedPriority = priority,
                 setPriority = setPriority
             )
             HorizontalDivider()
@@ -188,19 +193,21 @@ private fun AppBar(
             }) {
                 Text(
                     stringResource(id = R.string.save),
-                    fontSize = 20.sp
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
         }
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PriorityBox(
-    priority: Priority,
+    selectedPriority: Priority,
     setPriority: (Priority) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
 
     Column(
         modifier = Modifier
@@ -208,76 +215,76 @@ private fun PriorityBox(
             .clickable {
                 expanded = true
             }
-            .padding(10.dp, 5.dp)
+            .padding(10.dp, 7.dp)
     ) {
         Text(
             stringResource(id = R.string.priority),
-            fontSize = 20.sp,
-            modifier = Modifier
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 5.dp),
         )
 
-        when (priority) {
+        when (selectedPriority) {
             Priority.DEFAULT -> Text(
                 stringResource(id = R.string.no),
-                fontSize = 15.sp,
+                style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.alpha(.5f),
             )
 
             Priority.LOW -> Text(
                 stringResource(id = R.string.lowPriority),
-                fontSize = 15.sp,
+                style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.alpha(.75f),
             )
 
             Priority.HIGH -> Text(
                 stringResource(id = R.string.highPriority),
-                fontSize = 15.sp,
+                style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.error,
             )
         }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            offset = DpOffset(x = 30.dp, y = (-25).dp),
-            modifier = Modifier.background(MaterialTheme.colorScheme.background)
-        ) {
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        stringResource(id = R.string.no),
-                        modifier = Modifier.alpha(.5f)
-                    )
-                },
-                onClick = {
-                    setPriority(Priority.DEFAULT)
-                    expanded = false
-                },
-            )
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        stringResource(id = R.string.lowPriority),
-                        modifier = Modifier.alpha(.8f)
-                    )
-                },
-                onClick = {
-                    setPriority(Priority.LOW)
-                    expanded = false
-                },
-            )
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        stringResource(id = R.string.highPriority),
-                        color = MaterialTheme.colorScheme.error
-                    )
-                },
-                onClick = {
-                    setPriority(Priority.HIGH)
-                    expanded = false
-                },
-            )
+        if (expanded) {
+            ModalBottomSheet(
+                onDismissRequest = { expanded = false },
+                sheetState = sheetState,
+                containerColor = MaterialTheme.colorScheme.additionalColors.surfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column {
+                    Priority.entries.forEach { priority ->
+                        ListItem(
+                            headlineContent = {
+                                Text(
+                                    text = when (priority) {
+                                        Priority.DEFAULT -> stringResource(id = R.string.no)
+                                        Priority.LOW -> stringResource(id = R.string.lowPriority)
+                                        Priority.HIGH -> stringResource(id = R.string.highPriority)
+                                    },
+                                    style = MaterialTheme.typography.headlineMedium,
+                                )
+                            },
+                            leadingContent = {
+                                if(selectedPriority == priority)
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = null
+                                    )
+                            },
+                            modifier = Modifier
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication =
+                                    if (priority == Priority.HIGH)
+                                        rememberRipple(color = Color.Red.copy(alpha = 0.4f))
+                                    else
+                                        rememberRipple()
+                                ) { setPriority(priority) },
+                            colors = ListItemDefaults.colors(
+                                containerColor = MaterialTheme.colorScheme.additionalColors.surfaceVariant,
+                            ),
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -307,12 +314,13 @@ private fun DeadlineBox(
         Column {
             Text(
                 stringResource(id = R.string.toDoUntil),
+                style = MaterialTheme.typography.titleMedium,
                 fontSize = 20.sp,
             )
             AnimatedVisibility(visible = deadline != "") {
                 Text(
                     deadline,
-                    fontSize = 15.sp,
+                    style = MaterialTheme.typography.headlineMedium,
                     modifier = Modifier,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -347,7 +355,10 @@ private fun DeadlineBox(
                         showDatePicker = false
                     }
                 ) {
-                    Text(stringResource(id = R.string.ok))
+                    Text(
+                        stringResource(id = R.string.ok),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
                 }
             },
             dismissButton = {
@@ -356,7 +367,10 @@ private fun DeadlineBox(
                         showDatePicker = false
                     }
                 ) {
-                    Text(stringResource(id = R.string.cancel))
+                    Text(
+                        stringResource(id = R.string.cancel),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             },
             colors = DatePickerDefaults.colors(
@@ -425,7 +439,7 @@ fun AppBarAppBarPreview1() {
 fun PriorityBoxPreview1() {
     ToDoAppTheme {
         PriorityBox(
-            priority = Priority.DEFAULT,
+            selectedPriority = Priority.DEFAULT,
             setPriority = {},
         )
     }
@@ -436,7 +450,7 @@ fun PriorityBoxPreview1() {
 fun PriorityBoxPreview2() {
     ToDoAppTheme {
         PriorityBox(
-            priority = Priority.HIGH,
+            selectedPriority = Priority.HIGH,
             setPriority = {},
         )
     }

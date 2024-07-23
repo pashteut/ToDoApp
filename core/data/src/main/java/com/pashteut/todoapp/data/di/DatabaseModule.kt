@@ -4,8 +4,6 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import com.pashteut.todoapp.common.AppDispatchers
-import com.pashteut.todoapp.data.MyDataStore
 import com.pashteut.todoapp.database.ToDoItemDao
 import com.pashteut.todoapp.database.ToDoItemsDatabase
 import dagger.Module
@@ -25,8 +23,8 @@ class DatabaseModule {
 
     @Singleton
     @Provides
-    fun provideDataStore(@ApplicationContext context: Context, appDispatchers: AppDispatchers) =
-        MyDataStore(context.dataStore, appDispatchers)
+    fun provideDataStore(@ApplicationContext context: Context) =
+        context.dataStore
 }
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")

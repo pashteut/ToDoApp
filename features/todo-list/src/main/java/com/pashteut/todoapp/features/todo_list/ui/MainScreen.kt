@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenu
@@ -96,7 +97,7 @@ import kotlin.math.roundToInt
 fun MainScreen(
     addItemNavigation: () -> Unit,
     editItemNavigation: (String) -> Unit,
-    authNavigation: () -> Unit,
+    settingsNavigation: () -> Unit,
     viewModel: TodoListViewModel,
     modifier: Modifier = Modifier,
 ) {
@@ -109,7 +110,7 @@ fun MainScreen(
     MainScreenContent(
         addItemNavigation = addItemNavigation,
         editItemNavigation = editItemNavigation,
-        authNavigation = authNavigation,
+        settingsNavigation = settingsNavigation,
         doneItemsVisibility = visibility,
         changeVisibility = { viewModel.changeDoneItemsVisibility() },
         doneItemsCount = doneCount,
@@ -128,7 +129,7 @@ fun MainScreen(
 private fun MainScreenContent(
     addItemNavigation: () -> Unit,
     editItemNavigation: (String) -> Unit,
-    authNavigation: () -> Unit,
+    settingsNavigation: () -> Unit,
     doneItemsVisibility: Boolean,
     changeVisibility: () -> Unit,
     doneItemsCount: Int,
@@ -159,13 +160,25 @@ private fun MainScreenContent(
             LargeTopAppBar(
                 title = {
                     AppBar(
-                        authNavigation = authNavigation,
                         visibility = doneItemsVisibility,
                         changeVisibility = changeVisibility,
                         doneCount = doneItemsCount,
                         scrollState = scrollState,
                         onRefresh = onRefresh,
                     )
+                },
+                actions = {
+                    IconButton(
+                        onClick = settingsNavigation,
+                        modifier = Modifier
+                            .padding(10.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            contentDescription = "settings"
+                        )
+                    }
                 },
                 scrollBehavior = scrollBehavior,
                 colors = largeTopAppBarColors(scrolledContainerColor = MaterialTheme.colorScheme.surface),
@@ -272,19 +285,18 @@ fun AddItemBar(
 private fun AppBar(
     visibility: Boolean,
     changeVisibility: () -> Unit,
-    authNavigation: () -> Unit,
     doneCount: Int,
     modifier: Modifier = Modifier,
     scrollState: TopAppBarState,
     onRefresh: () -> Unit,
 ) {
     val collapseProgress = scrollState.heightOffset / scrollState.heightOffsetLimit
-
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 40.dp, top = 50.dp, end = 15.dp, bottom = 10.dp),
+            .padding(start = 40.dp, top = 20.dp, end = 15.dp, bottom = 10.dp),
     ) {
+
         Text(
             text = stringResource(id = R.string.myDeals),
             modifier = Modifier
@@ -293,8 +305,7 @@ private fun AppBar(
                         (collapseProgress * -20f * density).roundToInt(),
                         (collapseProgress * 8 * density).roundToInt()
                     )
-                }
-                .clickable { authNavigation() },
+                },
             style = MaterialTheme.typography.titleLarge,
         )
 
@@ -338,7 +349,6 @@ private fun AppBar(
                 }
             }
         }
-
     }
 }
 
@@ -427,7 +437,8 @@ private fun ToDoItemElement(
                     Text(
                         text = if (item.isDone) stringResource(id = R.string.markIsNotDone)
                         else stringResource(id = R.string.markIsDone),
-                        modifier = Modifier
+                        modifier = Modifier,
+                        style = MaterialTheme.typography.headlineMedium,
                     )
                 },
                 onClick = { changeIsItemDone(item.id) },
@@ -438,7 +449,8 @@ private fun ToDoItemElement(
                     Text(
                         stringResource(id = R.string.delete),
                         color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier
+                        modifier = Modifier,
+                        style = MaterialTheme.typography.headlineMedium,
                     )
                 },
                 onClick = { onDelete(item.id) },
@@ -498,7 +510,7 @@ private fun ToDoItemCard(
                 ) {
                     Text(
                         text = item.text,
-                        fontSize = 18.sp,
+                        style = MaterialTheme.typography.bodyMedium,
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
@@ -508,7 +520,7 @@ private fun ToDoItemCard(
                     if (item.deadline != null)
                         Text(
                             text = deadlineString,
-                            fontSize = 12.sp,
+                            style = MaterialTheme.typography.headlineMedium,
                             color = MaterialTheme.colorScheme.additionalColors.gray,
                         )
                 }
@@ -636,10 +648,10 @@ fun MainScreenPreview() {
             ),
             deleteItem = {},
             changeIsDone = {},
-            authNavigation = {},
             onRefresh = {},
             isRefreshing = false,
             userMessage = "",
+            settingsNavigation = {}
         )
     }
 }
@@ -652,7 +664,6 @@ fun AppBarPreview() {
         AppBar(
             visibility = true,
             changeVisibility = {},
-            authNavigation = {},
             doneCount = 5,
             scrollState = rememberTopAppBarState(),
             onRefresh = {},

@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -41,12 +42,12 @@ import com.pashteut.todoapp.features.todo_auth.ui_logic.AuthScreenViewModel
 
 @Composable
 fun AuthScreen(
-    mainScreenNavigation: () -> Unit,
+    backNavigation: () -> Unit,
     viewModel: AuthScreenViewModel,
 ) {
     val uiMessage by viewModel.message.collectAsStateWithLifecycle()
     AuthScreenContent(
-        mainScreenNavigation = mainScreenNavigation,
+        mainScreenNavigation = backNavigation,
         uiMessage = uiMessage,
         setAuthToken = viewModel::setToken,
         logout = viewModel::logout,
@@ -107,11 +108,17 @@ private fun AuthScreenContent(
                         )
                     )
                 }) {
-                    Text(stringResource(id = R.string.getToken))
+                    Text(
+                        stringResource(id = R.string.getToken),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
 
                 TextButton(onClick = logout) {
-                    Text(stringResource(id = R.string.resetToken))
+                    Text(
+                        stringResource(id = R.string.resetToken),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             }
             AuthInputBar(
@@ -141,6 +148,7 @@ private fun AuthInputBar(
             value = text,
             onValueChange = onTextChange,
             modifier = Modifier.weight(1f),
+            textStyle = MaterialTheme.typography.bodyMedium,
             label = { Text(stringResource(id = R.string.token)) },
             singleLine = true,
             trailingIcon = {

@@ -7,4 +7,9 @@
     <string name="system">Как в системе</string>
     <string name="aboutApp">О приложении</string>
     <string name="auth">Авторизация</string>
+    <string name="navigateUp">Перейти назад</string>
+    <string name="goToAuthPage">Открыть экран авторизации</string>
+    <string name="openThemes">Открыть список тем</string>
+    <string name="closeThemes">Скрыть список тем</string>
+    <string name="openAboutApp">Открыть экран о приложении</string>
 </resources>

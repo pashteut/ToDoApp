@@ -7,6 +7,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -57,6 +58,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -102,15 +111,29 @@ private fun DetailScreenContent(
     deleteItem: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val delete = stringResource(id = R.string.deleteDeal)
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            AppBar(mainScreenNavigation, saveItem = saveItem)
+            Box(
+                modifier = Modifier.semantics {
+                    isTraversalGroup = true
+                    traversalIndex = -1f
+                }
+            ) {
+                AppBar(
+                    mainScreenNavigation,
+                    saveItem = saveItem,
+                )
+            }
         }
     ) { innerPadding ->
         val scrollState = rememberScrollState()
         Column(
             modifier = Modifier
+                .semantics {
+                    isTraversalGroup = true
+                }
                 .padding(innerPadding)
                 .padding(10.dp)
                 .verticalScroll(scrollState)
@@ -141,7 +164,11 @@ private fun DetailScreenContent(
                     deleteItem()
                     mainScreenNavigation()
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = delete
+                    },
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -150,15 +177,16 @@ private fun DetailScreenContent(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.delete_icon),
-                        contentDescription = "delete",
+                        contentDescription = null,
                         modifier = Modifier.size(30.dp),
                         tint = MaterialTheme.colorScheme.error,
                     )
                     Spacer(modifier = Modifier.width(5.dp))
                     Text(
-                        stringResource(id = R.string.delete),
+                        text = stringResource(id = R.string.delete),
                         fontSize = 20.sp,
                         color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.clearAndSetSemantics {  }
                     )
                 }
             }
@@ -170,33 +198,51 @@ private fun DetailScreenContent(
 @Composable
 private fun AppBar(
     navigation: () -> Unit,
-    saveItem: () -> Boolean
+    saveItem: () -> Boolean,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val text = stringResource(id = R.string.enterTheText)
+    val navigateUp = stringResource(id = R.string.navigateUp)
+    val saveDeal = stringResource(id = R.string.saveDeal)
     TopAppBar(
         title = {},
         navigationIcon = {
-            IconButton(onClick = navigation) {
+            IconButton(
+                onClick = navigation,
+                modifier = Modifier
+                    .semantics {
+                        traversalIndex = -1f
+                        contentDescription = navigateUp
+                    }
+            ) {
                 Icon(
                     painter = painterResource(id = R.drawable.close_icon),
-                    contentDescription = "close"
+                    contentDescription = null
                 )
             }
         },
         actions = {
-            TextButton(onClick = {
-                if (saveItem())
-                    navigation()
-                else
-                    Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
-            }) {
+            TextButton(
+                onClick = {
+                    if (saveItem())
+                        navigation()
+                    else
+                        Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+                },
+                modifier = Modifier
+                    .semantics {
+                        contentDescription = saveDeal
+                    }
+            ) {
                 Text(
                     stringResource(id = R.string.save),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.clearAndSetSemantics { },
                 )
             }
-        }
+        },
+        modifier = modifier
     )
 }
 
@@ -209,10 +255,23 @@ private fun PriorityBox(
     var expanded by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 
+    val noPriority = stringResource(id = R.string.noPriority)
+    val lowPriority = stringResource(id = R.string.lowPriority)
+    val highPriority = stringResource(id = R.string.highPriority)
+
     Column(
         modifier = Modifier
+            .semantics(mergeDescendants = true) {
+                contentDescription = when (selectedPriority) {
+                    Priority.DEFAULT -> noPriority
+                    Priority.LOW -> lowPriority
+                    Priority.HIGH -> highPriority
+                }
+            }
             .fillMaxWidth()
-            .clickable {
+            .clickable(
+                onClickLabel = stringResource(id = R.string.changePriority),
+            ) {
                 expanded = true
             }
             .padding(10.dp, 7.dp)
@@ -220,26 +279,33 @@ private fun PriorityBox(
         Text(
             stringResource(id = R.string.priority),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(bottom = 5.dp),
+            modifier = Modifier
+                .padding(bottom = 5.dp)
+                .clearAndSetSemantics { },
         )
 
         when (selectedPriority) {
             Priority.DEFAULT -> Text(
                 stringResource(id = R.string.no),
                 style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.alpha(.5f),
+                modifier = Modifier
+                    .alpha(.5f)
+                    .clearAndSetSemantics { },
             )
 
             Priority.LOW -> Text(
-                stringResource(id = R.string.lowPriority),
+                stringResource(id = R.string.low),
                 style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.alpha(.75f),
+                modifier = Modifier
+                    .alpha(.75f)
+                    .clearAndSetSemantics { },
             )
 
             Priority.HIGH -> Text(
-                stringResource(id = R.string.highPriority),
+                stringResource(id = R.string.high),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.clearAndSetSemantics { },
             )
         }
         if (expanded) {
@@ -250,26 +316,36 @@ private fun PriorityBox(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column {
+                    Text(
+                        text = stringResource(id = R.string.choosePriority),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(10.dp, 10.dp),
+                    )
                     Priority.entries.forEach { priority ->
                         ListItem(
                             headlineContent = {
                                 Text(
                                     text = when (priority) {
                                         Priority.DEFAULT -> stringResource(id = R.string.no)
-                                        Priority.LOW -> stringResource(id = R.string.lowPriority)
-                                        Priority.HIGH -> stringResource(id = R.string.highPriority)
+                                        Priority.LOW -> stringResource(id = R.string.low)
+                                        Priority.HIGH -> stringResource(id = R.string.high)
                                     },
-                                    style = MaterialTheme.typography.headlineMedium,
+                                    style = MaterialTheme.typography.bodyMedium,
                                 )
                             },
                             leadingContent = {
-                                if(selectedPriority == priority)
+                                if (selectedPriority == priority)
                                     Icon(
                                         imageVector = Icons.Filled.Check,
                                         contentDescription = null
                                     )
                             },
                             modifier = Modifier
+                                .semantics {
+                                    selected = selectedPriority == priority
+                                }
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication =
@@ -304,25 +380,74 @@ private fun DeadlineBox(
         }
     )
 
+    val turnOnDeadline = stringResource(id = R.string.turnOnDeadline)
+    val turnOffDeadline = stringResource(id = R.string.turnOffDeadline)
+    val changeDeadline = stringResource(id = R.string.changeDeadline)
+    val deadlineIsOn = stringResource(id = R.string.deadlineIsOn)
+    val deadlineIsOff = stringResource(id = R.string.deadlineIsOff)
+    val doUntilS = stringResource(id = R.string.toDoUntil) + " $deadline"
+
+    val customActions =
+        if (deadline == "") listOf(
+            CustomAccessibilityAction(
+                label = turnOnDeadline,
+                action = {
+                    showDatePicker = true
+                    true
+                }
+            )
+        )
+        else listOf(
+            CustomAccessibilityAction(
+                label = turnOffDeadline,
+                action = {
+                    showDatePicker = false
+                    setDeadline(null)
+                    true
+                }
+            ),
+            CustomAccessibilityAction(
+                label = changeDeadline,
+                action = {
+                    showDatePicker = true
+                    true
+                }
+            )
+        )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(10.dp, 5.dp),
+            .padding(10.dp, 5.dp)
+            .semantics(mergeDescendants = true) {
+                this[SemanticsActions.CustomActions] = customActions
+                contentDescription =
+                    if (deadline == "")
+                        deadlineIsOff
+                    else{
+                        deadlineIsOn + doUntilS
+                    }
+            },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column {
+        Column(
+            modifier = Modifier
+                .semantics(mergeDescendants = true) {  }
+        ) {
             Text(
                 stringResource(id = R.string.toDoUntil),
                 style = MaterialTheme.typography.titleMedium,
-                fontSize = 20.sp,
+                modifier = Modifier.clearAndSetSemantics {  },
             )
             AnimatedVisibility(visible = deadline != "") {
                 Text(
-                    deadline,
+                    text = deadline,
                     style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier,
                     color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .clearAndSetSemantics { }
+                        .clickable { showDatePicker = true }
                 )
             }
         }
@@ -337,7 +462,8 @@ private fun DeadlineBox(
             colors = SwitchDefaults.colors(
                 uncheckedTrackColor = MaterialTheme.colorScheme.additionalColors.surfaceVariant,
                 checkedThumbColor = Color.White,
-            )
+            ),
+            modifier = Modifier.clearAndSetSemantics {  }
         )
     }
     if (showDatePicker) {

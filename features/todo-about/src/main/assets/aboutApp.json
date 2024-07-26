@@ -81,6 +81,10 @@
                   "width":{
                     "type": "wrap_content"
                   },
+                  "accessibility": {
+                    "description": "Перейти назад",
+                    "type": "button"
+                  },
                   "items": [
                     {
                       "type": "image",
@@ -141,6 +145,11 @@
                   "div": {
                     "type": "button",
                     "buttonText": "Развернуть",
+                    "accessibility": {
+                      "description": "Развернуть дополнительный текст",
+                      "type": "button",
+                      "mode": "merge"
+                    },
                     "textSize": 16,
                     "actions": [
                       {
@@ -159,6 +168,11 @@
                   "div": {
                     "type": "button",
                     "buttonText": "Свернуть",
+                    "accessibility": {
+                      "description": "Свернуть дополнительный текст",
+                      "type": "button",
+                      "mode": "merge"
+                    },
                     "textSize": 16,
                     "actions": [
                       {

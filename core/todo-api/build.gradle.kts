@@ -5,11 +5,24 @@ plugins {
     alias(libs.plugins.dagger.hilt.android)
 }
 
+android{
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+}
+
 dependencies {
     implementation(libs.dagger.hilt.android)
     kapt(libs.dagger.hilt.compiler)
     
     api(libs.kotlin.serialization)
+    testImplementation(libs.junit)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.ktor.client.mock)
+    testImplementation(libs.mockk)
+    testImplementation(libs.mockk.android)
+    testImplementation(libs.mockk.agent)
 
     api(libs.ktor.client.core)
     api(libs.ktor.client.android)

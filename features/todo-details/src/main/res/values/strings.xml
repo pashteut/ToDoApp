@@ -3,10 +3,25 @@
     <string name="enterTheText">Введите текст</string>
     <string name="priority">Важность</string>
     <string name="no">Нет</string>
-    <string name="lowPriority">Низкий</string>
-    <string name="highPriority">!!!Высокий</string>
-    <string name="save">СОХРАНИТЬ</string>
+    <string name="low">Низкая</string>
+    <string name="high">Высокая</string>
+    <string name="save">Сохранить</string>
     <string name="toDoUntil">Сделать до</string>
     <string name="ok">Ок</string>
     <string name="cancel">Закрыть</string>
+<!--    TalkBack-->
+    <string name="navigateUp">Перейти назад</string>
+    <string name="saveDeal">Сохранить дело</string>
+    <string name="dealText">Текст дела</string>
+    <string name="choosePriority">Выбрать важность</string>
+    <string name="noPriority">Важность не выбрана</string>
+    <string name="lowPriority">Низкая важность</string>
+    <string name="highPriority">Высокая важность</string>
+    <string name="changePriority">Изменить важность</string>
+    <string name="turnOnDeadline">Включить дедлайн у дела</string>
+    <string name="turnOffDeadline">Выключить дедлайн у дела</string>
+    <string name="changeDeadline">Изменить дедлайн</string>
+    <string name="deadlineIsOn">Дедлайн включен</string>
+    <string name="deadlineIsOff">Дедлайн выключен</string>
+    <string name="deleteDeal">Удалить дело</string>
 </resources>

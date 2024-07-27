@@ -6,4 +6,13 @@
     <string name="delete">Удалить</string>
     <string name="markIsDone">Отметить выполненным</string>
     <string name="markIsNotDone">Снять отметку о выполнении</string>
+<!--    TalkBack-->
+    <string name="refresh">Синхронизировать дела</string>
+    <string name="showCompleted">Показать выполненные дела</string>
+    <string name="hideCompleted">Скрыть выполненные дела</string>
+    <string name="goToSettings">Перейти в настройки</string>
+    <string name="addDeal">Добавить новое дело</string>
+    <string name="highPriority">Высокий приоритет</string>
+    <string name="lowPriority">Низкий приоритет</string>
+    <string name="editDeal">Редактировать дело</string>
 </resources>

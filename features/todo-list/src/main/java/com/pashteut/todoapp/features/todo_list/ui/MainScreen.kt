@@ -72,6 +72,16 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -80,17 +90,16 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pashteut.todoapp.ui_kit.additionalColors
 import com.pashteut.todoapp.data.model.Priority
-import com.pashteut.todoapp.features.todo_list.ui_logic.TodoItemUI
-import com.pashteut.todoapp.ui_kit.ToDoAppTheme
 import com.pashteut.todoapp.features.common.convertDateToString
 import com.pashteut.todoapp.features.todo_list.R
+import com.pashteut.todoapp.features.todo_list.ui_logic.TodoItemUI
 import com.pashteut.todoapp.features.todo_list.ui_logic.TodoListViewModel
+import com.pashteut.todoapp.ui_kit.ToDoAppTheme
+import com.pashteut.todoapp.ui_kit.additionalColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @Composable
@@ -168,15 +177,19 @@ private fun MainScreenContent(
                     )
                 },
                 actions = {
+                    val goToSettings = stringResource(id = R.string.goToSettings)
                     IconButton(
                         onClick = settingsNavigation,
                         modifier = Modifier
-                            .padding(10.dp),
+                            .padding(10.dp)
+                            .semantics {
+                                contentDescription = goToSettings
+                            },
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Settings,
                             tint = MaterialTheme.colorScheme.onSurface,
-                            contentDescription = "settings"
+                            contentDescription = null
                         )
                     }
                 },
@@ -185,18 +198,21 @@ private fun MainScreenContent(
             )
         },
         floatingActionButton = {
+            val addNew = stringResource(id = R.string.addDeal)
             FloatingActionButton(
                 onClick = addItemNavigation,
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier
                     .padding(
-                        end = WindowInsets.safeDrawing.asPaddingValues()
+                        end = WindowInsets.safeDrawing
+                            .asPaddingValues()
                             .calculateEndPadding(LocalLayoutDirection.current)
                     )
+                    .semantics { contentDescription = addNew }
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.plus_icon),
-                    contentDescription = "plus",
+                    contentDescription = null,
                     tint = Color.White
                 )
             }
@@ -227,7 +243,10 @@ private fun MainScreenContent(
                     )
                 }
                 item {
-                    AddItemBar(addItemNavigation = addItemNavigation)
+                    AddItemBar(
+                        addItemNavigation = addItemNavigation,
+                        modifier = Modifier.semantics { heading() }
+                    )
                 }
             }
 
@@ -259,6 +278,7 @@ fun AddItemBar(
     addItemNavigation: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val addNew = stringResource(id = R.string.addDeal)
     ListItem(
         headlineContent = {
             Text(
@@ -267,13 +287,18 @@ fun AddItemBar(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(start = 20.dp)
-                    .alpha(.7f),
+                    .alpha(.7f)
+                    .clearAndSetSemantics { },
             )
         },
         modifier = modifier
             .fillMaxSize()
             .clickable { addItemNavigation() }
-            .clip(RoundedCornerShape(15.dp)),
+            .clip(RoundedCornerShape(15.dp))
+            .semantics(mergeDescendants = true) {
+                contentDescription = addNew
+                role = Role.Button
+            },
         colors = ListItemDefaults.colors(
             containerColor = MaterialTheme.colorScheme.additionalColors.surfaceVariant,
         ),
@@ -305,7 +330,8 @@ private fun AppBar(
                         (collapseProgress * -20f * density).roundToInt(),
                         (collapseProgress * 8 * density).roundToInt()
                     )
-                },
+                }
+                .semantics { heading() },
             style = MaterialTheme.typography.titleLarge,
         )
 
@@ -318,7 +344,8 @@ private fun AppBar(
             Text(
                 text = stringResource(id = R.string.doneCount, doneCount),
                 modifier = Modifier
-                    .alpha(((1f - collapseProgress) * 0.7f).pow(2)),
+//                    .alpha(((1f - collapseProgress) * 0.7f).pow(2))
+                    .semantics { liveRegion = LiveRegionMode.Assertive },
                 style = MaterialTheme.typography.bodyMedium,
             )
             Row(
@@ -327,24 +354,35 @@ private fun AppBar(
                         IntOffset(0, (collapseProgress * -30 * density).roundToInt())
                     }
             ) {
+                val refreshContentDescription = stringResource(id = R.string.refresh)
+                val showCompletedContentDescription = stringResource(id = R.string.showCompleted)
+                val hideCompletedContentDescription = stringResource(id = R.string.hideCompleted)
                 IconButton(
                     onClick = onRefresh,
+                    modifier = Modifier
+                        .semantics { contentDescription = refreshContentDescription }
                 ) {
                     Icon(
                         painter = rememberVectorPainter(image = Icons.Default.Refresh),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        contentDescription = "Visibility off icon",
+                        contentDescription = null,
                     )
                 }
                 IconButton(
                     onClick = changeVisibility,
+                    modifier = Modifier
+                        .semantics {
+                            contentDescription =
+                                if (visibility) hideCompletedContentDescription
+                                else showCompletedContentDescription
+                        }
                 ) {
                     Icon(
                         painter =
                         if (visibility) painterResource(id = R.drawable.visibility_off_icon)
                         else painterResource(id = R.drawable.visibility_icon),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        contentDescription = "Visibility off icon",
+                        contentDescription = null,
                     )
                 }
             }
@@ -474,7 +512,9 @@ private fun ToDoItemCard(
             deadlineString = item.deadline?.convertDateToString() ?: ""
         }
     }
-
+    val markIsDone = stringResource(id = R.string.markIsDone)
+    val markIsNotDone = stringResource(id = R.string.markIsNotDone)
+    val editDeal = stringResource(id = R.string.editDeal)
     ListItem(
         headlineContent = {
             Row(
@@ -488,7 +528,7 @@ private fun ToDoItemCard(
                     Priority.HIGH ->
                         Icon(
                             painter = painterResource(id = R.drawable.priority_high_icon),
-                            contentDescription = "Priority high icon",
+                            contentDescription = stringResource(id = R.string.highPriority),
                             tint = Color.Red,
                             modifier = Modifier.size(20.dp),
                         )
@@ -497,7 +537,7 @@ private fun ToDoItemCard(
                     Priority.LOW ->
                         Icon(
                             painter = painterResource(id = R.drawable.priority_low_icon),
-                            contentDescription = "Priority low icon",
+                            contentDescription = stringResource(id = R.string.lowPriority),
                             modifier = Modifier.size(20.dp),
                             tint = MaterialTheme.colorScheme.additionalColors.gray,
                         )
@@ -533,10 +573,11 @@ private fun ToDoItemCard(
                     contentColor = MaterialTheme.colorScheme.additionalColors.gray,
                     disabledContentColor = MaterialTheme.colorScheme.additionalColors.gray,
                 ),
+                modifier = Modifier.clearAndSetSemantics { },
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.info_icon),
-                    contentDescription = "Delete icon",
+                    contentDescription = null,
                 )
             }
         },
@@ -551,12 +592,32 @@ private fun ToDoItemCard(
                     else MaterialTheme.colorScheme.additionalColors.gray,
                     checkmarkColor = MaterialTheme.colorScheme.additionalColors.surfaceVariant,
                 ),
+                modifier = Modifier.clearAndSetSemantics { },
             )
         },
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .clip(RoundedCornerShape(15.dp)),
+            .clip(RoundedCornerShape(15.dp))
+            .semantics {
+                this[SemanticsActions.CustomActions] = listOf(
+                    CustomAccessibilityAction(
+                        label = if (item.isDone) markIsNotDone
+                        else markIsDone,
+                        action = {
+                            onCheckBoxClick(item.id)
+                            true
+                        }
+                    ),
+                    CustomAccessibilityAction(
+                        label = editDeal,
+                        action = {
+                            onInfoIconClick()
+                            true
+                        }
+                    )
+                )
+            },
         colors = ListItemDefaults.colors(
             containerColor = MaterialTheme.colorScheme.additionalColors.surfaceVariant,
         ),

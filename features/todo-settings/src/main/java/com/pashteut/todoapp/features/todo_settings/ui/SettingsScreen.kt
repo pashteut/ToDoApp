@@ -33,6 +33,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pashteut.todoapp.features.todo_settings.R
@@ -62,18 +70,30 @@ fun SettingsScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = backNavigation) {
+                    val navigateUpContentDescription = stringResource(id = R.string.navigateUp)
+                    IconButton(
+                        onClick = backNavigation,
+                        modifier = Modifier
+                            .semantics { contentDescription = navigateUpContentDescription }
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "back"
+                            contentDescription = null
                         )
                     }
+                },
+                modifier = Modifier.semantics {
+                    isTraversalGroup = true
+                    traversalIndex = -1f
                 }
             )
-        }
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
+                .semantics {
+                    isTraversalGroup = true
+                }
                 .padding(innerPadding)
                 .padding(10.dp)
                 .clip(RoundedCornerShape(15.dp))
@@ -103,21 +123,27 @@ fun AuthBar(
     authNavigation: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val goToAuth = stringResource(id = R.string.goToAuthPage)
     ListItem(
         headlineContent = {
             Text(
                 text = stringResource(id = R.string.auth),
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.clearAndSetSemantics { }
             )
         },
         leadingContent = {
             Icon(
                 imageVector = Icons.Filled.Person,
-                contentDescription = "theme",
+                contentDescription = null,
             )
         },
         modifier = modifier
-            .clickable { authNavigation() },
+            .clickable { authNavigation() }
+            .semantics {
+                contentDescription = goToAuth
+                role = Role.Button
+            },
         colors = ListItemDefaults.colors(
             containerColor = Color.Transparent,
         ),
@@ -137,30 +163,41 @@ fun ThemeSettings(
     Column(
         modifier = modifier,
     ) {
+        val themeContentDescription =
+            if (themesVisibility) stringResource(id = R.string.closeThemes)
+            else stringResource(id = R.string.openThemes)
         ListItem(
             headlineContent = {
                 Text(
                     text = stringResource(id = R.string.theme),
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.clearAndSetSemantics { },
                 )
             },
             leadingContent = {
                 Icon(
                     painterResource(id = R.drawable.palette),
-                    contentDescription = "theme",
+                    contentDescription = null,
                 )
             },
             trailingContent = {
-                IconButton(onClick = { themesVisibility = !themesVisibility }) {
+                IconButton(
+                    onClick = { themesVisibility = !themesVisibility },
+                    modifier = Modifier.clearAndSetSemantics { },
+                ) {
                     Icon(
                         painterResource(id = R.drawable.arrow_down),
-                        contentDescription = "expand",
+                        contentDescription = null,
                         modifier = Modifier.graphicsLayer { rotationZ = rotationAngle }
                     )
                 }
             },
             modifier = Modifier
-                .clickable { themesVisibility = !themesVisibility },
+                .clickable { themesVisibility = !themesVisibility }
+                .semantics(mergeDescendants = true) {
+                    contentDescription = themeContentDescription
+                    role = Role.Button
+                },
             colors = ListItemDefaults.colors(
                 containerColor = Color.Transparent,
             ),
@@ -183,11 +220,16 @@ fun ThemeSettings(
                             RadioButton(
                                 selected = selectedThemeState == themeState,
                                 onClick = { selectThemeState(themeState) },
+                                modifier = Modifier.clearAndSetSemantics { }
                             )
                         },
                         modifier = Modifier
                             .padding(start = 10.dp)
-                            .clickable { selectThemeState(themeState) },
+                            .clickable { selectThemeState(themeState) }
+                            .semantics {
+                                selected = selectedThemeState == themeState
+                                role = Role.Checkbox
+                            },
                         colors = ListItemDefaults.colors(
                             containerColor = Color.Transparent,
                         ),
@@ -202,17 +244,19 @@ fun ThemeSettings(
 fun AboutAppBar(
     aboutScreenNavigation: () -> Unit,
 ) {
+    val aboutContentDescription = stringResource(id = R.string.openAboutApp)
     ListItem(
         headlineContent = {
             Text(
                 text = stringResource(id = R.string.aboutApp),
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.clearAndSetSemantics { }
             )
         },
         leadingContent = {
             Icon(
                 painter = painterResource(id = R.drawable.cubes),
-                contentDescription = "aboutApp"
+                contentDescription = null
             )
         },
         colors = ListItemDefaults.colors(
@@ -220,5 +264,9 @@ fun AboutAppBar(
         ),
         modifier = Modifier
             .clickable { aboutScreenNavigation() }
+            .semantics {
+                contentDescription = aboutContentDescription
+                role = Role.Button
+            }
     )
 }

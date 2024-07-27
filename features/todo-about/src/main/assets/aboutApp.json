@@ -77,14 +77,26 @@
               },
               "items": [
                 {
-                  "type": "image",
-                  "image_url": "@{isDarkTheme ? 'https://storage.yandexcloud.net/pashteut/arrow_back_white.svg' : 'https://storage.yandexcloud.net/pashteut/arrow_back_black.svg'}",
-                  "preview": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjODg4ODg4Ij48cGF0aCBkPSJtMzEzLTQ0MCAyMjQgMjI0LTU3IDU2LTMyMC0zMjAgMzIwLTMyMCA1NyA1Ni0yMjQgMjI0aDQ4N3Y4MEgzMTNaIi8+PC9zdmc+",
-                  "width": {
-                    "type": "fixed",
-                    "value": 24,
-                    "unit": "dp"
+                  "type": "container",
+                  "width":{
+                    "type": "wrap_content"
                   },
+                  "accessibility": {
+                    "description": "Перейти назад",
+                    "type": "button"
+                  },
+                  "items": [
+                    {
+                      "type": "image",
+                      "image_url": "@{isDarkTheme ? 'https://storage.yandexcloud.net/pashteut/arrow_back_white.svg' : 'https://storage.yandexcloud.net/pashteut/arrow_back_black.svg'}",
+                      "preview": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjODg4ODg4Ij48cGF0aCBkPSJtMzEzLTQ0MCAyMjQgMjI0LTU3IDU2LTMyMC0zMjAgMzIwLTMyMCA1NyA1Ni0yMjQgMjI0aDQ4N3Y4MEgzMTNaIi8+PC9zdmc+",
+                      "width": {
+                        "type": "fixed",
+                        "value": 24,
+                        "unit": "dp"
+                      }
+                    }
+                  ],
                   "action": {
                     "log_id": "navigateBack",
                     "url": "navigate-action://navigateUp"
@@ -133,6 +145,11 @@
                   "div": {
                     "type": "button",
                     "buttonText": "Развернуть",
+                    "accessibility": {
+                      "description": "Развернуть дополнительный текст",
+                      "type": "button",
+                      "mode": "merge"
+                    },
                     "textSize": 16,
                     "actions": [
                       {
@@ -151,6 +168,11 @@
                   "div": {
                     "type": "button",
                     "buttonText": "Свернуть",
+                    "accessibility": {
+                      "description": "Свернуть дополнительный текст",
+                      "type": "button",
+                      "mode": "merge"
+                    },
                     "textSize": 16,
                     "actions": [
                       {
